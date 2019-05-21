@@ -1,0 +1,28 @@
+kind: pipeline
+name: default
+
+steps:
+- name: build
+  image: machsix/hugo:latest
+  environment:
+    SSH_KEY:
+      from_secret: ssh_key
+    SSH_USER:
+      from_secret: ssh_user
+    SSH_PORT:
+      from_secret: ssh_port
+    SSH_SERVER: example.net
+    WWW_PATH: /data/wwwroot/example.net
+    WEB_USER: www
+  commands:
+    - git submodule init
+    - git submodule update
+    - echo /opt/docker/hugo
+    - mkdir -p ~/.ssh
+    - echo "" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - hugo
+    - "rsync --chown=: -av --delete -e \"ssh -o 'StrictHostKeyChecking=no' -p \" public/ @:"
+  when:
+    branch:
+    - master
